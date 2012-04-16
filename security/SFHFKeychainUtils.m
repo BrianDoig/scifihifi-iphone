@@ -30,6 +30,18 @@
 #import "SFHFKeychainUtils.h"
 #import <Security/Security.h>
 
+#import "WCDCrypto.h"
+
+#define kKeychainUDIDUsername @"BuffaloStudiosUDID__"
+#define kKeychainUDIDService  @"BuffaloStudiosPersistentUDID"
+
+@implementation UIDevice (SFHFKeychainUtils)
++ (NSString*) persistentUniqueIdentifier {
+	return [SFHFKeychainUtils getPersistentUniqueIdentifier];
+}
+@end
+
+
 static NSString *SFHFKeychainUtilsErrorDomain = @"SFHFKeychainUtilsErrorDomain";
 
 #if __IPHONE_OS_VERSION_MIN_REQUIRED < 30000 && TARGET_IPHONE_SIMULATOR
@@ -432,6 +444,35 @@ static NSString *SFHFKeychainUtilsErrorDomain = @"SFHFKeychainUtilsErrorDomain";
   
   return YES;
 }
+
+/* -------------------------- Begin Persistent UDID Code ----------------------------- */
+
++ (NSString *) generateUDID {
+	CFUUIDRef uuidRef = CFUUIDCreate(NULL);
+	CFStringRef uuidStringRef = CFUUIDCreateString(NULL, uuidRef);
+	NSString *uuid = [NSString stringWithString:(NSString *)uuidStringRef];
+	NSString *hash = [WCDCrypto stringMD5:[NSString stringWithFormat:@"%@-%lld", uuid, (long long)time(0)]];
+	return hash;
+}
+
++ (NSString *) getPersistentUniqueIdentifier {
+	__strong static NSString* _identifier = nil;
+    static dispatch_once_t oncePredicate = 0;
+    dispatch_once( &oncePredicate, 
+				  ^{
+					  _identifier = [SFHFKeychainUtils getPasswordForUsername:kKeychainUDIDUsername andServiceName:kKeychainUDIDService error:nil];
+					  if (!_identifier) {
+						  _identifier = [SFHFKeychainUtils generateUDID];
+						  [SFHFKeychainUtils storeUsername:kKeychainUDIDUsername andPassword:_identifier forServiceName:kKeychainUDIDService updateExisting:YES error:nil];
+					  }
+				  });
+	
+	return _identifier;
+
+}
+
+
+
 
 #endif
 
