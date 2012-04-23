@@ -452,6 +452,8 @@ static NSString *SFHFKeychainUtilsErrorDomain = @"SFHFKeychainUtilsErrorDomain";
 	CFStringRef uuidStringRef = CFUUIDCreateString(NULL, uuidRef);
 	NSString *uuid = [NSString stringWithString:(NSString *)uuidStringRef];
 	NSString *hash = [WCDCrypto stringMD5:[NSString stringWithFormat:@"%@-%lld", uuid, (long long)time(0)]];
+	CFRelease(uuidRef);
+	CFRelease(uuidStringRef);
 	return hash;
 }
 
